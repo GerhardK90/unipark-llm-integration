@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Prompt to ChatGPT Automatically</title>
+</head>
+<body>
+    <p id="responseText"></p>
+
+    <script>
+        async function submitPromptFromUrl() {
+            // Parse URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const questionnaire_id = urlParams.get('questionnaire_id');
+            const originalPrompt = urlParams.get('prompt');
+
+            // Validate parameters
+            if (!questionnaire_id || !originalPrompt) {
+                document.getElementById("responseText").textContent = "Error: Missing questionnaire_id or prompt in URL.";
+                return;
+            }
+
+            // Add meta prompt
+            const metaPrompt = "You answer to prompts. The level of detail and quality of your response must scale linearly based on the specificity and amount of information in the  prompt. Answer as short as possible and only refer to information given in the following prompt: ";
+            const prompt = `${metaPrompt} ${originalPrompt}`;
+
+            try {
+                // Send data to server
+                const response = await fetch("https://chat.gk-servers.de/submit_prompt", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ questionnaire_id, prompt })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+
+                const data = await response.json();
+                document.getElementById("responseText").textContent = data.response;
+            } catch (error) {
+                document.getElementById("responseText").textContent = "Error: " + error.message;
+            }
+        }
+
+        // Automatically submit prompt on page load
+        window.onload = submitPromptFromUrl;
+    </script>
+</body>
+</html>
